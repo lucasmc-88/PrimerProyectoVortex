@@ -24,7 +24,7 @@ router.patch(
     categoryController.updateCategory
 );
 
-router.delete("/:pid", categoryController.deleteCategory);
+router.delete("/:cid", categoryController.deleteCategory);
 
 module.exports = router;
 

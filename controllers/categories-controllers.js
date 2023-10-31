@@ -1,7 +1,5 @@
 const Category = require('../models/category');
-const fs = require('fs');
-const { validationResult } = require('express-validator');
-const category = require('../models/category');
+
 
 
 
@@ -10,20 +8,16 @@ const getCategoriById = async (req, res, next) => {
     let category;
     try {
         category = await Category.findById(categoryId);
-    } catch (err) {
-        console.log(
-            "Algo salió mal, no pude encontrar la categoría."
-        );
-        return next("Algo salió mal, no pude encontrar la categoría.");
+        if (!category) {
+            return res.status(404).json({ error: 'No se pudo encontrar una categoría para el ID proporcionado' });
+        };
+    } catch (error) {
+        return res.status(500).json({ error: 'Error al obtener la categoria' });
     }
-
-    if (!category) {
-        const error = "No se pudo encontrar una categoría para el ID proporcionado."
-        return next(error);
-    };
 
     res.json({ category: category.toObject({ getters: true }) });
 };
+
 
 const createCategory = async (req, res, next) => {
     const { name } = req.body;
@@ -31,34 +25,34 @@ const createCategory = async (req, res, next) => {
     const newCategory = new Category({
         name
     });
-console.log(newCategory);
+    console.log(newCategory);
     try {
         await newCategory.save();
     } catch (err) {
         return res.status(400).json({ message: err.message });
     }
-    res.status(201).json({ category: newCategory });
+    return res.status(201).json({ category: newCategory });
 };
 
 const updateCategory = async (req, res, next) => {
-     const { name } = req.body;
+    const { name } = req.body;
     const categoryId = req.params.cid;
 
     // Verificamos que el id de la categoría exista.
     const category = await Category.findOne({ _id: categoryId });
-console.log(category);
+    console.log(category);
     if (!category) {
         // El id de la categoría no existe.
         return res.status(404).json({ message: "Categoría no encontrada." });
     }
 
-    
+
     category.name = name;
 
     try {
         await category.save();
     } catch (err) {
-        const error = 'Algo salió mal, no se pudo actualizar el lugar';
+        const error = 'Algo salió mal, no se pudo actualizar la categoria';
         return next(error);
     }
 

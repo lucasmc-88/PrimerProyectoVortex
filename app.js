@@ -3,8 +3,9 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 
-//const categoryRoutes = require('./routes/categories-routes');
-
+const categoriesRoutes = require('./routes/categories-routes');
+const productsRoutes = require('./routes/products-routes')
+//const orderRoutes = require('./routes/orders-routes');
 
 
 const app = express();
@@ -12,13 +13,11 @@ const app = express();
 app.use(bodyParser.json());
 
 
-const categoriesRoutes = require('./routes/categories-routes');
-const productRoutes = require('./routes/products-routes');
-const orderRoutes = require('./routes/orders-routes');
 
-app.use('/categories', categoriesRoutes);
-//app.use('/products', productRoutes);
-//app.use('/orders', orderRoutes);
+
+app.use('/api/categories', categoriesRoutes);
+app.use('/api/products', productsRoutes);
+//app.use('/api/orders', orderRoutes);
 
 mongoose
     .connect(
