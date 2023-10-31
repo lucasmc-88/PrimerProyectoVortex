@@ -9,9 +9,22 @@ const categoryController = require('../controllers/categories-controllers');
 router.get("/:cid",categoryController.getCategoriById);
 
 // Ruta para crear una nueva categoría
-router.post('/', categoryController.createCategory);
 
 
+router.post('/', [
+    check("name").not().isEmpty()
+],
+categoryController.createCategory);
+
+//Rutas para modificar
+
+router.patch(
+    "/:cid",
+    [check("name").not().isEmpty()],
+    categoryController.updateCategory
+);
+
+router.delete("/:pid", categoryController.deleteCategory);
 
 module.exports = router;
 

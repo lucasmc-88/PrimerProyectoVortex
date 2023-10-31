@@ -25,7 +25,7 @@ mongoose
         `mongodb+srv://crudVortex:akademyVortex@cluster0.v4ofevg.mongodb.net/e-commerce`
     )
     .then(() => {
-        app.listen(5005);
+        app.listen(5000);
     })
     .catch((err) => {
         console.log('probando conexion');
