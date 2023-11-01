@@ -9,7 +9,7 @@ const orderController = require('../controllers/orders-controllers');
 //router.get("/:cid",orderController.getCategoriById);
 
 // Ruta para crear una nueva categoría
-//router.post('/', orderController.createCategory);
+router.post('/', orderController.createOrder);
 
 
 

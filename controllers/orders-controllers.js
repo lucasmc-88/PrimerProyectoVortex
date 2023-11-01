@@ -1,0 +1,54 @@
+const Order = require('../models/order')
+
+const createOrder = async (req, res, next) => {
+    const { products} = req.body;
+
+    const newOrder = new Order({
+        products,
+    });
+    newOrder.calculateTotalPrice();
+    try {
+        await newOrder.save();
+    } catch (error) {
+        res.status(400).json({ error: 'Error al crear la orden' })
+    }
+    return res.status(201).json({order: newOrder});
+}
+
+// Agregar producto al carrito
+const addProduct = async (req, res, next) => {
+    const { products, amount, totalPrice } = req.body;
+
+  try {
+    const newProduct = await Order.findById(req.params.id);
+    if (!newProduct) {
+      return res.status(404).json({ error: 'Carrito de compra no encontrado' });
+    }
+
+    newProduct.products.push({ products, amount, totalPrice });
+    newProduct.calculateTotalPrice(); 
+
+    await ordenCompra.save();
+    res.json(ordenCompra);
+  } catch (error) {
+    res.status(500).json({ error: 'Error al agregar producto al carrito' });
+  }
+}
+
+exports.createOrder = createOrder;
+
+/*const createOrder = async (req, res, next) => {
+  const { products} = req.body;
+  let result;
+  const newOrder = new Order({
+      products,
+  });
+
+  try {
+      result = await newOrder.save();
+  } catch (error) {
+      res.status(400).json({ error: 'Error al crear la orden' })
+  }
+  result = await  result.populate('products')
+  return res.status(201).json({result});
+}*/
