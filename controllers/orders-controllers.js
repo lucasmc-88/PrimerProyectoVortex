@@ -40,11 +40,9 @@ const addProduct = async (req, res, next) => {
       return res.status(404).json({ error: 'Carrito de compra no encontrado' });
     }
 
-    for (const product of productsToAdd) {
-      order.products.push({
-        product,
-      });
-    }
+    //order.products = [...order.products, ...productsToAdd];
+    order.products = order.products.concat(productsToAdd);
+
     //order.calculateTotalPrice();
     await order.save();
 
@@ -55,7 +53,7 @@ const addProduct = async (req, res, next) => {
   }
 };
 
-const updateProductByOrder = async (req, res, next) => {
+/*const updateProductByOrder = async (req, res, next) => {
   const orderId = req.params.oid;
   const productId = req.params.pid
   const updatedProductDetails = req.body;
@@ -78,6 +76,42 @@ console.log(updatedProductDetails.products + ' este es lo que se modifica');
     order.products = updatedProducts
     //order.calculateTotalPrice();
     await order.save();
+    res.json(order);
+
+  } catch (error) {
+    res.status(500).json({ error: 'No se pudo actualizar el producto en el carrito' });
+  }
+
+}*/
+const updateProductByOrder = async (req, res, next) => {
+  const orderId = req.params.oid;
+  const productId = req.params.pid
+  const updatedProductDetails = req.body;
+
+console.log(orderId + ' este es el id de la orden');
+console.log(productId + ' este es el id del producto');
+console.log(updatedProductDetails.products + ' este es lo que se modifica');
+
+  try {
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      return res.status(404).json({ error: 'Carrito de compra no encontrado' });
+    }
+
+    // Busca el producto y actualiza sus detalles
+    const updatedProducts = order.products.map((product) => {
+      if (product.productId == productId) {
+        return { ...product, ...updatedProductDetails };
+      }
+      return product;
+    });
+
+    order.products = updatedProducts;
+
+    // Actualiza el documento de la orden en la base de datos
+    await order.save();
+
     res.json(order);
 
   } catch (error) {
@@ -156,39 +190,3 @@ exports.deleteOrder = deleteOrder;
   }
   ;*/ 
 
-  /*
-
-  
-
-  const addProduct = async (req, res, next) => {
-    const productId = req.body.products[0].product;
-    let oldOrder;
-    const orderId = req.params.oid;
-    //const productId = products[0].productId
-    console.log(productId + '*****');
-  
-   
-    try {
-      let product;
-  
-      if (!product) {
-        product = await Product.findById(productId);
-        console.log(product + '*******************');
-      }
-     
-      oldOrder = await Order.findById(orderId);
-     
-      oldOrder.products.push({
-        product,
-      });
-  
-  
-      await oldOrder.save();
-  
-      res.status(201).json({ oldOrder });
-    } catch (error) {
-      console.log(error + 'error al agregar');
-      res.status(500).json({ error: 'Error al agregar producto al carrito' });
-    }
-  };
-  */
