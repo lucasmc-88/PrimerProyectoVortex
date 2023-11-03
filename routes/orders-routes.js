@@ -4,13 +4,15 @@ const { check } = require("express-validator");
 const orderController = require('../controllers/orders-controllers');
 
 
-//Rutas para traer las categorias
-
-//router.get("/:cid",orderController.getCategoriById);
-
-// Ruta para crear una nueva categoría
 router.post('/', orderController.createOrder);
 
 router.patch("/:oid", orderController.addProduct);
+
+router.patch("/:oid/update-product/:pid", orderController.updateProductByOrder);
+
+
+router.delete("/:oid/delete-product/:pid", orderController.deleteProductByOrder);
+
+router.delete("/:oid", orderController.deleteOrder);
 
 module.exports = router;

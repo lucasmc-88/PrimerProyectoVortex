@@ -5,8 +5,7 @@ const Schema = mongoose.Schema;
 
 const orderSchema = new Schema({
     products: [{
-        product:{type: mongoose.Types.ObjectId, required: false, ref: 'Product'},
-        description: { type: String, required: false },
+        productId:{type: mongoose.Types.ObjectId, required: false, ref: 'Product'},
         price: { type: Number, required: false },
     }],
     totalprice: { type: Number, required: false, validate: { validator: (v) => v >= 0, message: 'El precio total debe ser mayor o igual a 0.' } },
