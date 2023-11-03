@@ -20,13 +20,6 @@ const createOrder = async (req, res, next) => {
   return res.status(201).json({ newOrder });
 }
 
-// Agregar producto al carrito
-/*const addProduct = async (req, res, next) => {
-  const { products } = req.body;
-  const productId = products[0].product;
-  console.log(productId + 'quiero saber el id que tengo');
-
-};*/
 
 // Agregar producto al carrito
 const addProduct = async (req, res, next) => {
@@ -53,36 +46,7 @@ const addProduct = async (req, res, next) => {
   }
 };
 
-/*const updateProductByOrder = async (req, res, next) => {
-  const orderId = req.params.oid;
-  const productId = req.params.pid
-  const updatedProductDetails = req.body;
-console.log(orderId + ' este es el id de la orden');
-console.log(productId + ' este es el id del producto');
-console.log(updatedProductDetails.products + ' este es lo que se modifica');
-  try {
-    const order = await Order.findById(orderId);
 
-    if (!order) {
-      return res.status(404).json({ error: 'Carrito de compra no encontrado' });
-    }
-    // Busca el producto  y actualiza sus detalles
-    const updatedProducts = order.products.map((product) => {
-      if (product.productId == productId) {
-        return { ...product, ...updatedProductDetails };
-      }
-      return product;
-    });
-    order.products = updatedProducts
-    //order.calculateTotalPrice();
-    await order.save();
-    res.json(order);
-
-  } catch (error) {
-    res.status(500).json({ error: 'No se pudo actualizar el producto en el carrito' });
-  }
-
-}*/
 const updateProductByOrder = async (req, res, next) => {
   const orderId = req.params.oid;
   const productId = req.params.pid
