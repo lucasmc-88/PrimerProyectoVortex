@@ -1,6 +1,6 @@
 const Order = require('../models/order');
-const product = require('../models/product');
-const Product = require('../models/product')
+
+//const Product = require('../models/product')
 
 const createOrder = async (req, res, next) => {
   const { products } = req.body;
@@ -22,6 +22,7 @@ const createOrder = async (req, res, next) => {
 
 
 // Agregar producto al carrito
+/*
 const addProduct = async (req, res, next) => {
   const orderId = req.params.oid;
   const productsToAdd = req.body.products;
@@ -44,17 +45,11 @@ const addProduct = async (req, res, next) => {
   } catch (error) {
     res.status(500).json({ error: 'No se pudieron agregar los productos al carrito' });
   }
-};
+}*/
 
-
-const updateProductByOrder = async (req, res, next) => {
+const addProduct = async (req, res, next) => {
   const orderId = req.params.oid;
-  const productId = req.params.pid
-  const updatedProductDetails = req.body;
-
-console.log(orderId + ' este es el id de la orden');
-console.log(productId + ' este es el id del producto');
-console.log(updatedProductDetails.products + ' este es lo que se modifica');
+  const productsToAdd = req.body.products;
 
   try {
     const order = await Order.findById(orderId);
@@ -63,20 +58,88 @@ console.log(updatedProductDetails.products + ' este es lo que se modifica');
       return res.status(404).json({ error: 'Carrito de compra no encontrado' });
     }
 
-    // Busca el producto y actualiza sus detalles
-    const updatedProducts = order.products.map((product) => {
-      if (product.productId == productId) {
-        return { ...product, ...updatedProductDetails };
+    // Crear un mapa para realizar un seguimiento de la cantidad de cada producto
+    const productCountMap = new Map();
+
+    // Recorrer los productos a agregar
+    for (const productToAdd of productsToAdd) {
+      const productId = productToAdd.productId;
+
+      // Verificar si el producto ya existe en la orden
+      const existingProduct = order.products.find(product => product.productId.equals(productId));
+
+      if (existingProduct) {
+        // Si el producto ya existe, aumenta la cantidad
+        existingProduct.quantity++;
+      } else {
+        // Si el producto no existe, agrégalo a la orden
+        order.products.push({ productId, quantity: 1 });
       }
-      return product;
-    });
 
-    order.products = updatedProducts;
+      // Actualiza el mapa de conteo
+      if (productCountMap.has(productId)) {
+        productCountMap.set(productId, productCountMap.get(productId) + 1);
+      } else {
+        productCountMap.set(productId, 1);
+      }
+    }
 
-    // Actualiza el documento de la orden en la base de datos
+    // Guarda los cambios en la orden
     await order.save();
 
-    res.json(order);
+    res.json({ order, productCountMap });
+  } catch (error) {
+    res.status(500).json({ error: 'No se pudieron agregar los productos al carrito' });
+  }
+};
+
+
+
+const updateProductByOrder = async (req, res, next) => {
+  const orderId = req.params.oid;
+  const productId = req.params.pid
+  const updatedProductDetails = req.body;
+
+  console.log(orderId + ' este es el id de la orden');
+  console.log(productId + ' este es el id del producto');
+  console.log(updatedProductDetails.products + ' este es lo que se modifica');
+
+  try {
+
+    // Busca el producto y actualiza sus detalles
+
+    const updatedOrder = await Order.findOneAndUpdate({ _id: orderId }, {
+      products: {
+        $set: {
+          [productId]: updatedProductDetails,
+        },
+      },
+    });
+
+    if (!updatedOrder) {
+      return res.status(404).json({ error: 'Carrito de compra no encontrado' });
+    }
+
+    res.json(updatedOrder);
+
+    /*  const order = await Order.findById(orderId);
+ 
+     if (!order) {
+       return res.status(404).json({ error: 'Carrito de compra no encontrado1' });
+     }
+    const updatedProducts = order.products.map((product) => {
+       if (product.productId == productId) {
+         return { ...product, ...updatedProductDetails };
+       }
+       return product;
+     });
+ 
+     order.products = updatedProducts;
+ 
+     // Actualiza el documento de la orden en la base de datos
+     await order.save();
+ 
+     res.json(order);*/
 
   } catch (error) {
     res.status(500).json({ error: 'No se pudo actualizar el producto en el carrito' });
@@ -121,36 +184,43 @@ const deleteOrder = async (req, res, next) => {
   res.status(200).json({ message: "Orden eliminada con éxito" });
 }
 
+const getOrderById = async (req, res, next) => {
+  const orderId = req.params.oid;
+
+  let order
+
+  try {
+
+    order = await Order.findById(orderId).populate({ path: 'products.productId', select: 'price' });
+    const product = order.products[0].productId
+    console.log(order + 'probando**********');
+    console.log(product + 'probando el id');
+
+    if (!order) {
+      return res.status(404).json({ error: 'Orden de compra no encontrada' });
+    }
+    order.calculateTotalPrice(order);
+  } catch (error) {
+    console.log(error + 'este es el error');
+    res.status(500).json({ error: 'No se pudo obtener la orden de compra' });
+  }
+  res.json({ order });
+}
+
+const getOrder = async (req, res, next) => {
+
+  const orders = await Order.find();
+
+  res.json(orders);
+};
+
+
 exports.createOrder = createOrder;
 exports.addProduct = addProduct;
 exports.updateProductByOrder = updateProductByOrder;
 exports.deleteProductByOrder = deleteProductByOrder
 exports.deleteOrder = deleteOrder;
+exports.getOrderById = getOrderById;
+exports.getOrder = getOrder;
 
-
-/*
-  const { amount, totalprice } = req.body;
-
-  try {
-    const newOrder = await Order.findById(req.params.id);
-    if (!newOrder) {
-      return res.status(404).json({ error: 'Carrito de compra no encontrado' });
-    }
-
-    const productOrder = newOrder.products.productId(req.params.product);
-    if (!productOrder) {
-      return res.status(404).json({ error: 'Producto no encontrado en el carrito' });
-    }
-
-    productOrder.amount = amount;
-    productOrder.totalprice = totalprice;
-
-    newOrder.totalprice = newOrder.products.reduce((sum, product) => sum + product.totalprice, 0);
-
-    await newOrder.save();
-    res.json(newOrder);
-  } catch (error) {
-    res.status(500).json({ error: 'Error al actualizar producto en el carrito' });
-  }
-  ;*/ 
 

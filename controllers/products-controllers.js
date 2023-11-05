@@ -1,5 +1,6 @@
 
 const Product = require('../models/product');
+const Category = require('../models/category');
 
 
 
@@ -37,7 +38,7 @@ const getProductById = async (req, res, next) => {
     const productId = req.params.pid;
     let product;
     try {
-        product = await Product.findById(productId);
+        product = await Product.findById(productId).populate('categoryId');
         if (!product) {
             return res.status(404).json({ error: 'No se pudo encontrar el producto para el ID proporcionado' });
         };

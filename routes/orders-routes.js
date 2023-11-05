@@ -4,15 +4,23 @@ const { check } = require("express-validator");
 const orderController = require('../controllers/orders-controllers');
 
 
-router.post('/', orderController.createOrder);
+router.post('/createOrder', orderController.createOrder);
 
-router.patch("/:oid", orderController.addProduct);
+router.patch("/:oid", [
+    check("productId").not().isEmpty(),
+], orderController.addProduct);
 
-router.patch("/:oid/update-product/:pid", orderController.updateProductByOrder);
+router.patch("/:oid/update-product/:pid", [
+    check("productId").not().isEmpty(),
+],orderController.updateProductByOrder);
 
 
 router.delete("/:oid/delete-product/:pid", orderController.deleteProductByOrder);
 
 router.delete("/:oid", orderController.deleteOrder);
+
+router.get("/:oid", orderController.getOrderById);
+
+router.get("/", orderController.getOrder);
 
 module.exports = router;
