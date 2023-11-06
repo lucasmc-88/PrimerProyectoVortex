@@ -60,7 +60,7 @@ const createProduct = async (req, res, next) => {
         stock
     });
     try {
-
+        
         await newProduct.save();
         res.status(201).json({ newProduct });
     } catch (error) {

@@ -65,11 +65,9 @@ const addProduct = async (req, res, next) => {
     for (const productToAdd of productsToAdd) {
       const productId = productToAdd.productId;
 
-      // Verificar si el producto ya existe en la orden
       const existingProduct = order.products.find(product => product.productId.equals(productId));
 
       if (existingProduct) {
-        // Si el producto ya existe, aumenta la cantidad
         existingProduct.quantity++;
       } else {
         // Si el producto no existe, agrégalo a la orden
@@ -83,8 +81,6 @@ const addProduct = async (req, res, next) => {
         productCountMap.set(productId, 1);
       }
     }
-
-    // Guarda los cambios en la orden
     await order.save();
 
     res.json({ order, productCountMap });
@@ -96,20 +92,20 @@ const addProduct = async (req, res, next) => {
 
 
 const updateProductByOrder = async (req, res, next) => {
-  const orderId = req.params.oid; 
-  const productId = req.params.pid; 
-  const newQuantity = req.body.quantity; 
+  const orderId = req.params.oid;
+  const productId = req.params.pid;
+  const newQuantity = req.body.quantity;
   console.log(newQuantity + '*****************************');
   let order;
   try {
-    
+
     order = await Order.findById(orderId);
 
     if (!order) {
       return res.status(404).json({ error: 'Orden no encontrada' });
     }
 
-    
+
     const productToUpdate = order.products.find((product) => product.productId.toString() === productId);
 
     if (!productToUpdate) {
@@ -134,21 +130,37 @@ const deleteProductByOrder = async (req, res, next) => {
 
   try {
     const order = await Order.findById(orderId);
+
     if (!order) {
       return res.status(404).json({ error: 'Carrito de compra no encontrado' });
     }
-    const updatedProducts = order.products.filter((product) => product.productId != productId);
-    order.products = updatedProducts;
-    order.calculateTotalPrice();
 
+    // Buscamos el producto en la orden por su ID de producto
+    const product = order.products.find((product) => product.productId == productId);
+
+    if (!product) {
+      return res.status(404).json({ error: 'Producto no encontrado' });
+    }
+
+    // Actualizamos los productos
+    if (product.quantity === 1) {
+      const updatedProducts = order.products.filter((product) => product.productId != productId);
+      order.products = updatedProducts;
+    } else {
+      product.quantity -= 1;
+    }
+
+    // Calculamos el precio total de la orden
+    //order.calculateTotalPrice();
+
+    // Guardamos la orden
     await order.save();
 
     res.json(order);
   } catch (error) {
     res.status(500).json({ error: 'No se pudo eliminar el producto del carrito' });
   }
-}
-
+};
 
 const deleteOrder = async (req, res, next) => {
   const orderId = req.params.oid;
@@ -180,7 +192,7 @@ const getOrderById = async (req, res, next) => {
     if (!order) {
       return res.status(404).json({ error: 'Orden de compra no encontrada' });
     }
-    order.calculateTotalPrice();
+    order.calculateTotalPrice(order);
   } catch (error) {
     console.log(error + 'este es el error');
     res.status(500).json({ error: 'No se pudo obtener la orden de compra' });
