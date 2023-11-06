@@ -89,8 +89,6 @@ const addProduct = async (req, res, next) => {
   }
 };
 
-
-
 const updateProductByOrder = async (req, res, next) => {
   const orderId = req.params.oid;
   const productId = req.params.pid;
@@ -162,6 +160,27 @@ const deleteProductByOrder = async (req, res, next) => {
   }
 };
 
+const deleteAllProductById = async (req, res, next) => {
+    const orderId = req.params.oid;
+    const productId = req.params.pid;
+  
+    try {
+      const order = await Order.findById(orderId);
+      if (!order) {
+        return res.status(404).json({ error: 'Carrito de compra no encontrado' });
+      }
+      
+      const updatedProducts = order.products.filter((product) => product.productId != productId);
+      order.products = updatedProducts;
+      //order.calculateTotalPrice();
+  
+      await order.save();
+  
+      res.json(order);
+    } catch (error) {
+      res.status(500).json({ error: 'No se pudo eliminar el producto del carrito' });
+    }
+  }
 const deleteOrder = async (req, res, next) => {
   const orderId = req.params.oid;
   console.log(orderId);
@@ -211,9 +230,8 @@ const getOrder = async (req, res, next) => {
 exports.createOrder = createOrder;
 exports.addProduct = addProduct;
 exports.updateProductByOrder = updateProductByOrder;
-exports.deleteProductByOrder = deleteProductByOrder
+exports.deleteProductByOrder = deleteProductByOrder;
+exports.deleteAllProductById = deleteAllProductById;
 exports.deleteOrder = deleteOrder;
 exports.getOrderById = getOrderById;
 exports.getOrder = getOrder;
-
-

@@ -16,6 +16,7 @@ router.patch("/:oid/update-product/:pid", [
 
 
 router.delete("/:oid/delete-product/:pid", orderController.deleteProductByOrder);
+router.delete("/:oid/deleteproductbyid/:pid", orderController.deleteAllProductById);
 
 router.delete("/:oid", orderController.deleteOrder);
 
