@@ -11,7 +11,7 @@ router.patch("/:oid", [
 ], orderController.addProduct);
 
 router.patch("/:oid/update-product/:pid", [
-    check("productId").not().isEmpty(),
+    check("quantity").not().isEmpty(),
 ],orderController.updateProductByOrder);
 
 
