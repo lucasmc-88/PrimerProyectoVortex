@@ -50,24 +50,22 @@ const getProductById = async (req, res, next) => {
 };
 
 const createProduct = async (req, res, next) => {
-    const { name, description, price, categoryId, stock } = req.body;
-
-    const newProduct = new Product({
-        name,
-        description,
-        price,
-        categoryId,
-        stock
-    });
     try {
-        
-        await newProduct.save();
-        res.status(201).json({ newProduct });
-    } catch (error) {
-        console.log(error + "mostrar el error");
-        res.status(400).json({ error: 'Error al crear el producto' })
-    }
+        const productsToAdd = req.body;
 
+        // Valida que req.body sea un array de productos
+        if (!Array.isArray(productsToAdd)) {
+            return res.status(400).json({ error: 'El cuerpo de la solicitud debe ser un arreglo de productos' });
+        }
+
+        // Utiliza el método `insertMany` para crear varios productos en la base de datos
+        const createdProducts = await Product.insertMany(productsToAdd);
+
+        res.status(201).json({ createdProducts });
+    } catch (error) {
+        console.log(error); 
+        res.status(400).json({ error: 'Error al crear los productos' });
+    }
 };
 
 const updateProduct = async (req, res, next) => {
