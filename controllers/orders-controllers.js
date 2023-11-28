@@ -1,52 +1,30 @@
 const Order = require('../models/order');
-
 const Product = require('../models/product')
+const HttpError = require('../models/http-error')
+
+
 
 const createOrder = async (req, res, next) => {
   const { products } = req.body;
   let result;
   let newOrder = new Order({
+   
     products,
-
   });
 
   try {
     await newOrder.save();
 
-  } catch (error) {
-    console.log(error);
-    res.status(400).json({ error: 'Error al crear la orden' })
+  } catch (err) {
+
+    const error = new HttpError(
+      'Error al crear el carrito'
+    );
+    return next(error);
   }
   return res.status(201).json({ newOrder });
 }
 
-
-// Agregar producto al carrito
-/*
-const addProduct = async (req, res, next) => {
-  const orderId = req.params.oid;
-  const productsToAdd = req.body.products;
-  console.log(productsToAdd);
-  try {
-    const order = await Order.findById(orderId);
-
-    if (!order) {
-      return res.status(404).json({ error: 'Carrito de compra no encontrado' });
-    }
-
-    //order.products = [...order.products, ...productsToAdd];
-    order.products = order.products.concat(productsToAdd);
-
-    //order.calculateTotalPrice();
-    await order.save();
-
-
-    res.json(order);
-  } catch (error) {
-    res.status(500).json({ error: 'No se pudieron agregar los productos al carrito' });
-  }
-}*/
-
 const addProduct = async (req, res, next) => {
   const orderId = req.params.oid;
   const productsToAdd = req.body.products;
@@ -55,11 +33,11 @@ const addProduct = async (req, res, next) => {
     const order = await Order.findById(orderId);
 
     if (!order) {
-      return res.status(404).json({ error: 'Carrito de compra no encontrado' });
+      const error = new HttpError("Carrito de compra no encontrado", 404);
+      return next(error);
     }
-
     // Crear un mapa para realizar un seguimiento de la cantidad de cada producto
-    const productCountMap = new Map();
+
 
     // Recorrer los productos a agregar
     for (const productToAdd of productsToAdd) {
@@ -70,22 +48,19 @@ const addProduct = async (req, res, next) => {
       if (existingProduct) {
         existingProduct.quantity++;
       } else {
-        // Si el producto no existe, agrégalo a la orden
+
         order.products.push({ productId, quantity: 1 });
       }
 
-      // Actualiza el mapa de conteo
-      if (productCountMap.has(productId)) {
-        productCountMap.set(productId, productCountMap.get(productId) + 1);
-      } else {
-        productCountMap.set(productId, 1);
-      }
     }
     await order.save();
 
-    res.json({ order, productCountMap });
-  } catch (error) {
-    res.status(500).json({ error: 'No se pudieron agregar los productos al carrito' });
+    res.json({ order });
+  } catch (err) {
+    const error = new HttpError(
+      'No se pudieron agregar los productos al carrito'
+    );
+    return next(error);
   }
 };
 
@@ -98,18 +73,19 @@ const updateProductByOrder = async (req, res, next) => {
   try {
 
     order = await Order.findById(orderId);
-
     if (!order) {
-      return res.status(404).json({ error: 'Orden no encontrada' });
+      const error = new HttpError("Carrito de compra no encontrado", 404);
+      return next(error);
     }
 
 
     const productToUpdate = order.products.find((product) => product.productId.toString() === productId);
 
-    if (!productToUpdate) {
-      return res.status(404).json({ error: 'Producto no encontrado en la orden' });
-    }
 
+    if (!productToUpdate) {
+      const error = new HttpError("Producto no encontrado en la orden", 404);
+      return next(error);
+    }
     productToUpdate.quantity = newQuantity;
 
     // order.calculateTotalPrice(order); 
@@ -117,9 +93,11 @@ const updateProductByOrder = async (req, res, next) => {
     await order.save();
 
     res.status(200).json(order);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+  } catch (err) {
+    const error = new HttpError(
+      'No se pudo actualizar la cantidad del producto'
+    );
+    return next(error);
   }
 };
 const deleteProductByOrder = async (req, res, next) => {
@@ -130,14 +108,16 @@ const deleteProductByOrder = async (req, res, next) => {
     const order = await Order.findById(orderId);
 
     if (!order) {
-      return res.status(404).json({ error: 'Carrito de compra no encontrado' });
+      const error = new HttpError("Carrito de compra no encontrado", 404);
+      return next(error);
     }
 
     // Buscamos el producto en la orden por su ID de producto
     const product = order.products.find((product) => product.productId == productId);
 
     if (!product) {
-      return res.status(404).json({ error: 'Producto no encontrado' });
+      const error = new HttpError("Producto no encontrado", 404);
+      return next(error);
     }
 
     // Actualizamos los productos
@@ -146,54 +126,66 @@ const deleteProductByOrder = async (req, res, next) => {
       order.products = updatedProducts;
     } else {
       product.quantity -= 1;
+
     }
-
-    // Calculamos el precio total de la orden
     //order.calculateTotalPrice();
-
-    // Guardamos la orden
     await order.save();
 
     res.json(order);
-  } catch (error) {
-    res.status(500).json({ error: 'No se pudo eliminar el producto del carrito' });
+  } catch (err) {
+    const error = new HttpError(
+      'No se pudo eliminar el producto del carrito'
+    );
+    return next(error);
   }
 };
 
 const deleteAllProductById = async (req, res, next) => {
-    const orderId = req.params.oid;
-    const productId = req.params.pid;
-  
-    try {
-      const order = await Order.findById(orderId);
-      if (!order) {
-        return res.status(404).json({ error: 'Carrito de compra no encontrado' });
-      }
-      
-      const updatedProducts = order.products.filter((product) => product.productId != productId);
-      order.products = updatedProducts;
-      //order.calculateTotalPrice();
-  
-      await order.save();
-  
-      res.json(order);
-    } catch (error) {
-      res.status(500).json({ error: 'No se pudo eliminar el producto del carrito' });
+  const orderId = req.params.oid;
+  const productId = req.params.pid;
+
+  try {
+    const order = await Order.findById(orderId);
+    if (!order) {
+      const error = new HttpError("Carrito de compra no encontrado", 404);
+      return next(error);
     }
+
+    const updatedProducts = order.products.filter((product) => product.productId != productId);
+    order.products = updatedProducts;
+    //order.calculateTotalPrice();
+
+    await order.save();
+
+    res.json(order);
+  } catch (err) {
+    const error = new HttpError(
+      'No se pudo eliminar el producto del carrito'
+    );
+    return next(error);
   }
+}
+
 const deleteOrder = async (req, res, next) => {
   const orderId = req.params.oid;
   console.log(orderId);
 
-  const order = await Order.findOne({ _id: orderId });
+  try {
+    const order = await Order.findOne({ _id: orderId });
 
-  if (!order) {
-    return res.status(404).json({ message: "Orden no encontrada" });
+    if (!order) {
+      const error = new HttpError("Orden no encontrada", 404);
+      return next(error);
+    }
+
+    await order.deleteOne({ _id: orderId });
+    res.status(200).json({ message: "Orden eliminada con éxito" });
+  } catch (err) {
+    const error = new HttpError(
+      'No se pudo obtener la orden de compra'
+    );
+    return next(error);
   }
-
-  await order.deleteOne({ _id: orderId });
-
-  res.status(200).json({ message: "Orden eliminada con éxito" });
 }
 
 const getOrderById = async (req, res, next) => {
@@ -203,27 +195,47 @@ const getOrderById = async (req, res, next) => {
 
   try {
 
-    order = await Order.findById(orderId).populate({ path: 'products.productId', select: 'price' });
+    //order = await Order.findById(orderId).populate({ path: 'products.productId', select: 'price' });
+   order = await Order.findById(orderId).populate('products.productId');
     const product = order.products[0].productId
-    console.log(order + 'probando**********');
-    console.log(product + 'probando el id');
+
 
     if (!order) {
-      return res.status(404).json({ error: 'Orden de compra no encontrada' });
+
+      res.status(404).json({ message: "No se encontro ninguna orden de compra" });
     }
     order.calculateTotalPrice(order);
-  } catch (error) {
-    console.log(error + 'este es el error');
-    res.status(500).json({ error: 'No se pudo obtener la orden de compra' });
-  }
+  }  catch (err) {
+    console.error(err)
+    res.status(404).json({ message: "Algo salio mal, no se pudo encontrar ninguna orden" });
+    }
   res.json({ order });
 }
 
 const getOrder = async (req, res, next) => {
+let orders;
+  try {
+   //orders = await Order.find().populate('products.productId.name products.productId.description products.productId.price');
+  orders = await Order.find().populate('products.productId');
+   //orders = await Order.find().populate({path: 'products.productId',select: ' price' });
+  
+console.log(orders + '*****');
 
-  const orders = await Order.find();
-
-  res.json(orders);
+    if (!orders) {
+      res.status(404).json({ message: "No se encontro ninguna orden de compra" });
+    };
+  
+   orders.forEach(order => {
+      console.log(order.products[0].productId.price + ' dentro del for');
+    
+        order.calculateTotalPrice(order);
+      
+    });
+    res.json(orders);
+  } catch (err) {
+    console.error(err)
+    res.status(404).json({ message: "Algo salio mal, no se pudo encontrar ninguna orden" });
+    }
 };
 
 

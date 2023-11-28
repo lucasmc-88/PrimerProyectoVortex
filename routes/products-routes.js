@@ -32,5 +32,5 @@ router.patch("/:pid", [
     ProductController.updateProduct
 );
 
-router.delete("/:pic", ProductController.deleteProduct);
+router.delete("/:pid", ProductController.deleteProduct);
 module.exports = router;

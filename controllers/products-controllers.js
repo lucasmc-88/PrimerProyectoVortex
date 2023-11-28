@@ -1,22 +1,26 @@
 
 const Product = require('../models/product');
 const Category = require('../models/category');
-
-
+const HttpError = require('../models/http-error')
 
 
 const getProduct = async (req, res, next) => {
     let products;
     try {
 
-        products = await Product.find();
-    } catch (error) {
-        res.status(500).json({ error: "Error al listar los productos" });
+        products = await Product.find().populate('categoryId');
+        console.log(products + '***');
+    } catch (err) {
+        const error = new HttpError(
+            'Error al listar los productos'
+        );
+        return next(error)
     }
 
 
     if (!products.length) {
-        res.status(404).json({ error: "No se encontraron productos" });
+        const error = new HttpError("No se encontraron productos", 404);
+        return next(error);
     }
 
     res.json({ products });
@@ -28,9 +32,13 @@ const getProductsByCategoryId = async (req, res, next) => {
     let products
     try {
         products = await Product.find({ categoryId });
+       // products = await Product.findById(categoryId).populate('categoryId');
         console.log(products);
-    } catch (error) {
-        res.status(500).json({ error: 'Error al listar los productos por categoría' });
+    } catch (err) {
+        const error = new HttpError(
+            'Error al listar los productos por categoría'
+        );
+        return next(error);
     }
     res.json(products);
 }
@@ -40,10 +48,14 @@ const getProductById = async (req, res, next) => {
     try {
         product = await Product.findById(productId).populate('categoryId');
         if (!product) {
-            return res.status(404).json({ error: 'No se pudo encontrar el producto para el ID proporcionado' });
+            const error = new HttpError("No se pudo encontrar el producto para el ID proporcionado", 404);
+            return next(error);
         };
-    } catch (error) {
-        return res.status(500).json({ error: 'Error al obtener el producto' });
+    } catch (err) {
+        const error = new HttpError(
+            'Error al obtener el producto'
+        );
+        return next(error)
     }
 
     res.json({ product: product.toObject({ getters: true }) });
@@ -55,16 +67,19 @@ const createProduct = async (req, res, next) => {
 
         // Valida que req.body sea un array de productos
         if (!Array.isArray(productsToAdd)) {
-            return res.status(400).json({ error: 'El cuerpo de la solicitud debe ser un arreglo de productos' });
+            const error = new HttpError("La solicitud debe ser un arreglo de productos", 400);
+            return next(error);
         }
 
-        // Utiliza el método `insertMany` para crear varios productos en la base de datos
+        // Utiliza el método `insertMany` para crear varios productos a la coleccion
         const createdProducts = await Product.insertMany(productsToAdd);
 
         res.status(201).json({ createdProducts });
-    } catch (error) {
-        console.log(error); 
-        res.status(400).json({ error: 'Error al crear los productos' });
+    } catch (err) { 
+        const error = new HttpError(
+            'Error al crear los productos'
+        );
+        return next(error)
     }
 };
 
@@ -74,7 +89,8 @@ const updateProduct = async (req, res, next) => {
 
     const product = await Product.findOne({ id: productId });
     if (!product) {
-        return res.status(404).json({ message: "Producto no encontrado" });
+        const error = new HttpError("Producto no encontrados", 404);
+        return next(error);
     }
 
     product.name = name;
@@ -86,8 +102,10 @@ const updateProduct = async (req, res, next) => {
     try {
         await product.save();
     } catch (err) {
-        const error = 'Algo salió mal, no se pudo actualizar el producto';
-        return next(error);
+        const error = new HttpError(
+            'Algo salió mal, no se pudo actualizar el producto'
+        );
+        return next(error)
     }
 
     res.status(200).json({ product: product.toObject({ getters: true }) });
@@ -95,15 +113,16 @@ const updateProduct = async (req, res, next) => {
 };
 
 const deleteProduct = async (req, res, next) => {
-    const { productId } = req.params;
-
-    const product = await Product.findOne({ _id: productId });
+    const  productId = req.params.pid;
+console.log(productId + '*****');
+    const product = await Product.findById( {_id: productId});
 
     if (!product) {
-        return res.status(404).json({ message: "Producto no encontrado" });
+        const error = new HttpError("Producto no encontrados", 404);
+        return next(error);
     }
 
-    await Product.deleteOne({ _id: productId });
+    await Product.deleteOne({_id: productId});
 
     res.status(200).json({ message: "Producto eliminado con exito" });
 }

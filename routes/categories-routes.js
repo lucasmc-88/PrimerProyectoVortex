@@ -7,6 +7,7 @@ const categoryController = require('../controllers/categories-controllers');
 //Rutas para traer las categorias
 
 router.get("/:cid",categoryController.getCategoriById);
+router.get("/",categoryController.getCategory);
 
 // Ruta para crear una nueva categoría
 
@@ -19,7 +20,7 @@ categoryController.createCategory);
 //Rutas para modificar
 
 router.patch(
-    "/:cid",
+    "/updatecategory/:cid",
     [check("name").not().isEmpty()],
     categoryController.updateCategory
 );

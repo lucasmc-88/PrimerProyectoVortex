@@ -18,6 +18,26 @@ const getCategoriById = async (req, res, next) => {
     res.json({ category: category.toObject({ getters: true }) });
 };
 
+const getCategory = async (req, res, next) => {
+    let category;
+    try {
+
+        category = await Category.find()
+    } catch (err) {
+        const error = new HttpError(
+            'Error al listar las categorias'
+        );
+        return next(error)
+    }
+
+
+    if (!category.length) {
+        const error = new HttpError("No se encontraron categorias", 404);
+        return next(error);
+    }
+
+    res.json({ category });
+};
 
 const createCategory = async (req, res, next) => {
     try {
@@ -37,6 +57,7 @@ const createCategory = async (req, res, next) => {
         res.status(400).json({ error: 'Error al crear las categorías' });
     }
 };
+
 const updateCategory = async (req, res, next) => {
     const { name } = req.body;
     const categoryId = req.params.cid;
@@ -63,10 +84,10 @@ const updateCategory = async (req, res, next) => {
 };
 
 const deleteCategory = async (req, res, next) => {
-    const { categoryId } = req.params;
+    const categoryId  = req.params.cid;
 
     const category = await Category.findOne({ _id: categoryId });
-
+    console.log(category + '****');
     if (!category) {
 
         return res.status(404).json({ message: "Categoría no encontrada." });
@@ -76,7 +97,10 @@ const deleteCategory = async (req, res, next) => {
 
     res.status(200).json({ message: "Categoría eliminada con éxito." });
 };
+
+
 exports.getCategoriById = getCategoriById;
+exports.getCategory = getCategory;
 exports.createCategory = createCategory;
 exports.updateCategory = updateCategory;
 exports.deleteCategory = deleteCategory;
